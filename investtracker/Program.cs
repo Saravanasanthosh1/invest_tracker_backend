@@ -3,6 +3,19 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Enable CORS for Netlify + local dev
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNetlifyAndLocal",
+        policy => policy
+            .WithOrigins(
+                "https://YOUR_NETLIFY_APP.netlify.app", // replace with actual Netlify URL
+                "http://localhost:3000" // local React dev server
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Add services to the container.
 // Add JWT auth (Supabase)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -28,6 +41,10 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var app = builder.Build();
+
+// Use CORS before controllers
+app.UseCors("AllowNetlifyAndLocal");
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
