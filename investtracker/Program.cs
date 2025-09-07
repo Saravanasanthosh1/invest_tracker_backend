@@ -9,7 +9,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowNetlifyAndLocal",
         policy => policy
             .WithOrigins(
-                "https://YOUR_NETLIFY_APP.netlify.app", // replace with actual Netlify URL
+                "https://sdinvest.netlify.app", // replace with actual Netlify URL
                 "http://localhost:3000" // local React dev server
             )
             .AllowAnyHeader()
