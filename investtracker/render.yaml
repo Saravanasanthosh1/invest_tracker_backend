@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: invest-tracker-pro-backend
+    env: dotnet
+    plan: free
+    buildCommand: "dotnet build -c Release"
+    startCommand: "dotnet run -c Release --urls http://0.0.0.0:10000"
