@@ -1,37 +1,30 @@
+using investtracker.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Controllers
+namespace investtracker.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class InvestmentsController : ControllerBase
     {
-        [HttpGet("portfolio")]
-        public IActionResult GetPortfolio()
-        {
-            var portfolio = new[]
-            {
-                new { name = "Saravana Mutual Funds", value = 40 },
-                new { name = "Saravana Chits", value = 20 },
-                new { name = "Saravana FDs", value = 15 },
-                new { name = "Saravana Gold", value = 15 },
-                new { name = "Saravana Loans", value = 10 }
-            };
+        private readonly AppDbContext _context;
+        public InvestmentsController(AppDbContext context) => _context = context;
 
-            return Ok(portfolio);
+        [HttpGet("portfolio")]
+        public async Task<IActionResult> GetPortfolio()
+        {
+            var portfolio = await _context.Portfolio.ToListAsync();
+             return Ok(portfolio);
+            //return Ok();
         }
 
         [HttpGet("monthly")]
-        public IActionResult GetMonthly()
+        public async Task<IActionResult> GetMonthly()
         {
-            var monthly = new[]
-            {
-                new { month = "Jan", amount = 400 },
-                new { month = "Feb", amount = 300 },
-                new { month = "Mar", amount = 500 }
-            };
-
+            var monthly = await _context.MonthlyCommitments.ToListAsync();
             return Ok(monthly);
+            //return Ok();
         }
     }
 }

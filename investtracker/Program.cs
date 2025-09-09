@@ -1,7 +1,21 @@
+﻿using investtracker.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add DbContext with Supabase connection string
+try
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+catch (Exception ex)
+{
+    Console.WriteLine("⚠️ Failed to init DB: " + ex.Message);
+}
+
 
 // Enable CORS for Netlify + local dev
 builder.Services.AddCors(options =>
@@ -9,14 +23,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowNetlifyAndLocal",
         policy => policy
             .WithOrigins(
-                "https://sdinvest.netlify.app", // replace with actual Netlify URL
-                "http://localhost:3000" // local React dev server
+                "https://sdinvest.netlify.app", // your Netlify URL
+                "http://localhost:3000"         // local React dev server
             )
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
 
-// Add services to the container.
 // Add JWT auth (Supabase)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -31,23 +44,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+if (!builder.Environment.IsDevelopment())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 
 var app = builder.Build();
 
-// Use CORS before controllers
-app.UseCors("AllowNetlifyAndLocal");
-
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// ✅ Order of middlewares matters
+if (app.Environment.IsDevelopment() || true) // enable always
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -55,6 +66,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowNetlifyAndLocal");
+
+app.UseAuthentication();  // ✅ Add this before Authorization
 app.UseAuthorization();
 
 app.MapControllers();
