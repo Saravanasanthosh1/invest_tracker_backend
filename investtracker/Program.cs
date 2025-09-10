@@ -23,6 +23,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
+
 // ✅ JWT auth (placeholder until Supabase auth wired in)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -42,6 +43,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
 
 
 // ✅ Apply DB migrations automatically at startup
@@ -82,4 +85,5 @@ if (!app.Environment.IsDevelopment())
     app.Urls.Add($"http://0.0.0.0:{port}");
 }
 
+logger.LogInformation("✅ Application is running!");
 app.Run();

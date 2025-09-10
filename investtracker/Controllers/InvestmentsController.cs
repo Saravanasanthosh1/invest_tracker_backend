@@ -1,6 +1,7 @@
 ﻿using investtracker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace investtracker.Controllers
 {
@@ -9,7 +10,8 @@ namespace investtracker.Controllers
     public class InvestmentsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public InvestmentsController(AppDbContext context) => _context = context;
+        private readonly ILogger _logger;
+        public InvestmentsController(AppDbContext context, ILogger logger) { _context = context; _logger = logger; }
 
         [HttpGet("portfolio")]
         public async Task<IActionResult> GetPortfolio()
@@ -17,12 +19,13 @@ namespace investtracker.Controllers
             try
             {
                 var portfolio = await _context.Portfolio.ToListAsync();
+                _logger.LogInformation("Success");
                 return Ok(portfolio);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Exception: {ex.Message}");
-                return BadRequest(ex.Message );
+                return BadRequest(ex.Message);
             }
             //return Ok();
         }
@@ -30,8 +33,19 @@ namespace investtracker.Controllers
         [HttpGet("monthly")]
         public async Task<IActionResult> GetMonthly()
         {
-            var monthly = await _context.MonthlyCommitments.ToListAsync();
-            return Ok(monthly);
+            try
+            {
+                var monthly = await _context.MonthlyCommitments.ToListAsync();
+                _logger.LogInformation("Success");
+                return Ok(monthly);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception: {ex.Message}");
+                _logger.LogInformation("Failed");
+                return BadRequest(ex.Message);
+            }
+
             //return Ok();
         }
     }
