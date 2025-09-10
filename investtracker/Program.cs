@@ -5,32 +5,25 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add DbContext with Supabase connection string
-try
-{
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-}
-catch (Exception ex)
-{
-    Console.WriteLine("⚠️ Failed to init DB: " + ex.Message);
-}
+// ✅ Configure DbContext with Supabase/Postgres
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
-// Enable CORS for Netlify + local dev
+// ✅ CORS (Netlify + local dev)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowNetlifyAndLocal",
         policy => policy
             .WithOrigins(
-                "https://sdinvest.netlify.app", // your Netlify URL
-                "http://localhost:3000"         // local React dev server
+                "https://sdinvest.netlify.app", // your Netlify app
+                "http://localhost:3000"         // local dev
             )
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
-// Add JWT auth (Supabase)
+// ✅ JWT auth (placeholder until Supabase auth wired in)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -48,29 +41,41 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-if (!builder.Environment.IsDevelopment())
-{
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
-}
-
-
 var app = builder.Build();
 
-// ✅ Order of middlewares matters
-if (app.Environment.IsDevelopment() || true) // enable always
+
+// ✅ Apply DB migrations automatically at startup
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    try
+    {
+        db.Database.Migrate();   // create/update tables if needed
+        Console.WriteLine("✅ Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database migration failed: {ex.Message}");
+    }
 }
 
+// ✅ Middleware pipeline
 app.UseHttpsRedirection();
-
 app.UseCors("AllowNetlifyAndLocal");
 
-app.UseAuthentication();  // ✅ Add this before Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.MapControllers();
+
+// ✅ Render needs to bind to assigned port
+if (!app.Environment.IsDevelopment())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 app.Run();
