@@ -10,8 +10,12 @@ namespace investtracker.Controllers
     public class InvestmentsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly ILogger _logger;
-        public InvestmentsController(AppDbContext context, ILogger logger) { _context = context; _logger = logger; }
+        private readonly ILogger<InvestmentsController> _logger;
+        public InvestmentsController(AppDbContext context, ILogger<InvestmentsController> logger)
+        {
+            _context = context; 
+            _logger = logger; 
+        }
 
         [HttpGet("portfolio")]
         public async Task<IActionResult> GetPortfolio()
