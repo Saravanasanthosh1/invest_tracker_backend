@@ -1,4 +1,4 @@
-using investtracker.Data;
+﻿using investtracker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +14,16 @@ namespace investtracker.Controllers
         [HttpGet("portfolio")]
         public async Task<IActionResult> GetPortfolio()
         {
-            var portfolio = await _context.Portfolio.ToListAsync();
-             return Ok(portfolio);
+            try
+            {
+                var portfolio = await _context.Portfolio.ToListAsync();
+                return Ok(portfolio);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception: {ex.Message}");
+                return BadRequest(ex.Message );
+            }
             //return Ok();
         }
 

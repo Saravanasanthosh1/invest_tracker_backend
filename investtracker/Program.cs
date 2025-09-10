@@ -45,17 +45,21 @@ var app = builder.Build();
 
 
 // ✅ Apply DB migrations automatically at startup
-using (var scope = app.Services.CreateScope())
+// ✅ Run migrations only in Development
+if (app.Environment.IsDevelopment())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        db.Database.Migrate();   // create/update tables if needed
-        Console.WriteLine("✅ Database migrated successfully.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"❌ Database migration failed: {ex.Message}");
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        try
+        {
+            db.Database.Migrate();   // create/update tables if needed
+            Console.WriteLine("✅ Database migrated successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Database migration failed: {ex.Message}");
+        }
     }
 }
 
