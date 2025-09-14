@@ -1,5 +1,6 @@
 ﻿
 // Data/AppDbContext.cs
+using investtracker.Models;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,6 +12,7 @@ namespace investtracker.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+        public DbSet<AuthUser> AuthUsers { get; set; }
         public DbSet<Portfolio> Portfolio { get; set; }
         public DbSet<MonthlyCommitment> MonthlyCommitments { get; set; }
     }
