@@ -18,11 +18,13 @@ namespace investtracker.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AppDbContext context, IConfiguration config)
+        public AuthController(AppDbContext context, IConfiguration config, ILogger<AuthController> logger)
         {
             _context = context;
             _config = config;
+            _logger = logger;
         }
 
         [HttpPost("register")]
@@ -47,11 +49,12 @@ namespace investtracker.Controllers
             return Ok("User registered successfully");
         }
 
-        
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] Models.LoginRequest request)
         {
+            _logger.LogInformation("Login request: " + request.UserId);
             var user = await _context.AuthUsers.FirstOrDefaultAsync(u => u.UserId == request.UserId);
             if (user == null) return Unauthorized("Invalid credentials");
 
@@ -66,9 +69,9 @@ namespace investtracker.Controllers
             // ✅ Generate JWT token
             var claims = new[]
             {
-            new Claim(ClaimTypes.Name, user.UserId),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+                new Claim(ClaimTypes.Name, user.UserId),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
