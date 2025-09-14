@@ -8,7 +8,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ✅ Configure DbContext with Supabase/Postgres
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection"),
+            npgsqlOptions =>
+            {
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorCodesToAdd: null
+                );
+            }
+        )
+        .EnableSensitiveDataLogging()
+        .EnableDetailedErrors()
+    );
 
 // ✅ CORS (Netlify + local dev)
 builder.Services.AddCors(options =>
@@ -38,7 +51,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
 
@@ -48,6 +61,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
